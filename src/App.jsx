@@ -6,6 +6,7 @@ import {
   CalendarDays,
   ChevronDown,
   CirclePlus,
+  LogOut,
   Search,
   Wallet,
 } from 'lucide-react'
@@ -22,6 +23,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
+
+import { useAuth } from './context/AuthContext'
+import Login from './components/Login'
+import Register from './components/Register'
 
 import Sidebar from './components/Sidebar'
 import StatCard from './components/StatCard'
@@ -51,8 +56,28 @@ const chartColors = [
 ]
 
 function App() {
+  const { user, isAuthenticated, logout } = useAuth()
+
+  const [authScreen, setAuthScreen] = useState('login')
   const [showTransactionForm, setShowTransactionForm] = useState(false)
   const [transactions, setTransactions] = useState(recentTransactions)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
+
+  if (!isAuthenticated) {
+    if (authScreen === 'register') {
+      return (
+        <Register
+          onSwitchToLogin={() => setAuthScreen('login')}
+        />
+      )
+    }
+
+    return (
+      <Login
+        onSwitchToRegister={() => setAuthScreen('register')}
+      />
+    )
+  }
 
 
   const totalIncome = transactions
@@ -130,26 +155,62 @@ function App() {
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500" />
             </button>
 
-            <button
-              type="button"
-              className="flex items-center gap-2 rounded-xl border border-stone-200 bg-white p-2"
-            >
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-800 text-sm font-bold text-white">
-                F
-              </div>
-              <div className="hidden text-left sm:block">
-                <p className="text-sm font-semibold text-stone-800">
-                  Finance User
-                </p>
-                <p className="text-xs text-stone-500">
-                  Personal Account
-                </p>
-              </div>
-              <ChevronDown
-                size={16}
-                className="hidden text-stone-400 sm:block"
-              />
-            </button>
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsProfileOpen((open) => !open)}
+                aria-expanded={isProfileOpen}
+                aria-haspopup="true"
+                className="flex items-center gap-2 rounded-xl border border-stone-200 bg-white p-2 transition hover:bg-emerald-50"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-800 text-sm font-bold text-white">
+                  {(user?.name || 'T').charAt(0).toUpperCase()}
+                </div>
+
+                <div className="hidden text-left sm:block">
+                  <p className="text-sm font-semibold text-stone-800">
+                    {user?.name || 'Thrive User'}
+                  </p>
+                  <p className="text-xs text-stone-500">
+                    Personal Account
+                  </p>
+                </div>
+
+                <ChevronDown
+                  size={16}
+                  className={`hidden text-stone-400 transition-transform sm:block ${isProfileOpen ? 'rotate-180' : ''
+                    }`}
+                />
+              </button>
+
+              {isProfileOpen && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-stone-200 bg-white p-2 shadow-lg">
+                  <div className="border-b border-stone-100 px-3 py-2">
+                    <p className="text-sm font-semibold text-stone-800">
+                      {user?.name || 'Thrive User'}
+                    </p>
+                    <p className="text-xs text-stone-500">
+                      Personal Account
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsProfileOpen(false)
+                      logout()
+                      setAuthScreen('login')
+                    }}
+                    className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50"
+                  >
+                    <LogOut size={16} />
+                    Sign out
+                  </button>
+                </div>
+              )}
+            </div>
+
           </div>
         </header>
 
@@ -217,15 +278,6 @@ function App() {
                   Your monthly financial activity
                 </p>
               </div>
-
-              <button
-                type="button"
-                className="flex items-center gap-2 rounded-lg border border-stone-200 px-3 py-2 text-xs font-medium text-stone-600"
-              >
-                <CalendarDays size={15} />
-                Last 6 months
-                <ChevronDown size={14} />
-              </button>
             </div>
 
             <div className="mt-6 h-72 w-full">
