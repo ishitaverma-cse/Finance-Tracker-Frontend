@@ -2,30 +2,56 @@ import { createContext, useContext, useState } from 'react'
 
 const AuthContext = createContext(null)
 
-export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(() => {
-        try {
-            const savedUser = localStorage.getItem('finora-user')
-            return savedUser ? JSON.parse(savedUser) : null
-        } catch {
-            localStorage.removeItem('finora-user')
-            return null
+const USER_KEY = 'thrive-user'
+const TOKEN_KEY = 'thrive-token'
+
+const getSavedValue = (newKey, oldKey, parseJson = false) => {
+    try {
+        let value = localStorage.getItem(newKey)
+
+        if (value === null) {
+            value = localStorage.getItem(oldKey)
+
+            if (value !== null) {
+                localStorage.setItem(newKey, value)
+                localStorage.removeItem(oldKey)
+            }
         }
-    })
+
+        if (value === null) return null
+
+        return parseJson ? JSON.parse(value) : value
+    } catch {
+        localStorage.removeItem(newKey)
+        localStorage.removeItem(oldKey)
+        return null
+    }
+}
+
+export const AuthProvider = ({ children }) => {
+    const [user, setUser] = useState(
+        () => getSavedValue(USER_KEY, 'finora-user', true)
+    )
 
     const [token, setToken] = useState(
-        () => localStorage.getItem('finora-token') || null
+        () => getSavedValue(TOKEN_KEY, 'finora-token')
     )
 
     const login = (userData, authToken) => {
-        localStorage.setItem('finora-user', JSON.stringify(userData))
-        localStorage.setItem('finora-token', authToken)
+        localStorage.setItem(USER_KEY, JSON.stringify(userData))
+        localStorage.setItem(TOKEN_KEY, authToken)
+
+        localStorage.removeItem('finora-user')
+        localStorage.removeItem('finora-token')
 
         setUser(userData)
         setToken(authToken)
     }
 
     const logout = () => {
+        localStorage.removeItem(USER_KEY)
+        localStorage.removeItem(TOKEN_KEY)
+
         localStorage.removeItem('finora-user')
         localStorage.removeItem('finora-token')
 

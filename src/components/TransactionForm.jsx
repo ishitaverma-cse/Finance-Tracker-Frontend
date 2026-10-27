@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { X, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
 
 const initialForm = {
@@ -30,9 +30,28 @@ const categories = {
     ],
 }
 
-function TransactionForm({ onClose, onSubmit }) {
+function TransactionForm({ onClose, onSubmit, transaction = null }) {
     const [form, setForm] = useState(initialForm)
     const [error, setError] = useState('')
+
+    const isEditing = Boolean(transaction)
+
+    useEffect(() => {
+        if (transaction) {
+            setForm({
+                title: transaction.title || transaction.name || '',
+                amount: String(transaction.amount ?? ''),
+                type: transaction.type || 'expense',
+                category: transaction.category || '',
+                date: transaction.dateISO || String(transaction.date).slice(0, 10),
+                description: transaction.description || '',
+            })
+        } else {
+            setForm(initialForm)
+        }
+
+        setError('')
+    }, [transaction])
 
     const handleChange = (event) => {
         const { name, value } = event.target
@@ -102,11 +121,13 @@ function TransactionForm({ onClose, onSubmit }) {
                             id="transaction-form-title"
                             className="mt-2 text-2xl font-bold tracking-tight text-emerald-950"
                         >
-                            Add Transaction
+                            {isEditing ? 'Edit Transaction' : 'Add Transaction'}
                         </h2>
 
                         <p className="mt-1 text-sm text-stone-500">
-                            Record your income or expenses.
+                            {isEditing
+                                ? 'Update the details of this transaction.'
+                                : 'Record your income or expenses.'}
                         </p>
                     </div>
 
@@ -121,7 +142,6 @@ function TransactionForm({ onClose, onSubmit }) {
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
-                    {/* Transaction type */}
                     <div>
                         <label className="mb-2 block text-sm font-semibold text-stone-700">
                             Transaction type
@@ -131,16 +151,12 @@ function TransactionForm({ onClose, onSubmit }) {
                             <button
                                 type="button"
                                 onClick={() => handleChange({
-                                    target: {
-                                        name: 'type',
-                                        value: 'expense',
-                                    },
+                                    target: { name: 'type', value: 'expense' },
                                 })}
-                                className={`flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                                    form.type === 'expense'
-                                        ? 'border-rose-200 bg-rose-50 text-rose-700 ring-1 ring-rose-200'
-                                        : 'border-stone-200 bg-white text-stone-500 hover:bg-stone-50'
-                                }`}
+                                className={`flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition ${form.type === 'expense'
+                                    ? 'border-rose-200 bg-rose-50 text-rose-700 ring-1 ring-rose-200'
+                                    : 'border-stone-200 bg-white text-stone-500 hover:bg-stone-50'
+                                    }`}
                             >
                                 <ArrowUpRight size={18} />
                                 Expense
@@ -149,16 +165,12 @@ function TransactionForm({ onClose, onSubmit }) {
                             <button
                                 type="button"
                                 onClick={() => handleChange({
-                                    target: {
-                                        name: 'type',
-                                        value: 'income',
-                                    },
+                                    target: { name: 'type', value: 'income' },
                                 })}
-                                className={`flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition ${
-                                    form.type === 'income'
-                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200'
-                                        : 'border-stone-200 bg-white text-stone-500 hover:bg-stone-50'
-                                }`}
+                                className={`flex items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition ${form.type === 'income'
+                                    ? 'border-emerald-200 bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200'
+                                    : 'border-stone-200 bg-white text-stone-500 hover:bg-stone-50'
+                                    }`}
                             >
                                 <ArrowDownLeft size={18} />
                                 Income
@@ -166,7 +178,6 @@ function TransactionForm({ onClose, onSubmit }) {
                         </div>
                     </div>
 
-                    {/* Transaction name */}
                     <div>
                         <label
                             htmlFor="transaction-title"
@@ -188,7 +199,6 @@ function TransactionForm({ onClose, onSubmit }) {
                         />
                     </div>
 
-                    {/* Amount and date */}
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label
@@ -232,7 +242,6 @@ function TransactionForm({ onClose, onSubmit }) {
                         </div>
                     </div>
 
-                    {/* Category */}
                     <div>
                         <label
                             htmlFor="transaction-category"
@@ -258,16 +267,25 @@ function TransactionForm({ onClose, onSubmit }) {
                                     {category}
                                 </option>
                             ))}
+
+                            {form.category &&
+                                !categories[form.type].includes(form.category) && (
+                                    <option value={form.category}>
+                                        {form.category}
+                                    </option>
+                                )}
                         </select>
                     </div>
 
-                    {/* Optional description */}
                     <div>
                         <label
                             htmlFor="transaction-description"
                             className="mb-2 block text-sm font-semibold text-stone-700"
                         >
-                            Description <span className="font-normal text-stone-400">(optional)</span>
+                            Description{' '}
+                            <span className="font-normal text-stone-400">
+                                (optional)
+                            </span>
                         </label>
 
                         <textarea
@@ -304,7 +322,7 @@ function TransactionForm({ onClose, onSubmit }) {
                             type="submit"
                             className="rounded-xl bg-emerald-800 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-900"
                         >
-                            Save Transaction
+                            {isEditing ? 'Save Changes' : 'Save Transaction'}
                         </button>
                     </div>
                 </form>

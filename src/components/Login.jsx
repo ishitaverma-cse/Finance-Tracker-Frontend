@@ -167,11 +167,10 @@ function Login({ onSwitchToRegister }) {
                             placeholder="you@example.com"
                             aria-invalid={Boolean(errors.email)}
                             aria-describedby={errors.email ? 'login-email-error' : undefined}
-                            className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:ring-2 ${
-                                errors.email
+                            className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:ring-2 ${errors.email
                                     ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-100'
                                     : 'border-stone-200 focus:border-emerald-700 focus:ring-emerald-100'
-                            }`}
+                                }`}
                         />
 
                         {errors.email && (
@@ -204,11 +203,10 @@ function Login({ onSwitchToRegister }) {
                                 placeholder="Enter your password"
                                 aria-invalid={Boolean(errors.password)}
                                 aria-describedby={errors.password ? 'login-password-error' : undefined}
-                                className={`w-full rounded-xl border py-3 pl-4 pr-12 text-sm outline-none transition focus:ring-2 ${
-                                    errors.password
+                                className={`w-full rounded-xl border py-3 pl-4 pr-12 text-sm outline-none transition focus:ring-2 ${errors.password
                                         ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-100'
                                         : 'border-stone-200 focus:border-emerald-700 focus:ring-emerald-100'
-                                }`}
+                                    }`}
                             />
 
                             <button

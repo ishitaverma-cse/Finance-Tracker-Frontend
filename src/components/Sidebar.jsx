@@ -41,7 +41,7 @@ function Sidebar() {
 
                 <div>
                     <h1 className="text-lg font-bold tracking-tight text-emerald-950">
-                        Finora
+                        Thrive
                     </h1>
                     <p className="text-xs text-stone-500">
                         Personal Finance
