@@ -715,11 +715,12 @@ function App() {
         <section className="mt-6 overflow-hidden rounded-3xl border border-[#E6E9DF] bg-[#F7F8F4] shadow-sm">
 
           {/* Header */}
-          <div className="flex items-center justify-between gap-4 px-5 pb-5 pt-6 sm:px-7 sm:pt-7">
+          <div className="flex flex-wrap items-center justify-between gap-4 px-5 pb-5 pt-6 sm:px-7 sm:pt-7">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#173F35] text-white">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#173F35] text-white">
                 <Wallet size={21} />
               </div>
+
               <div>
                 <h3 className="text-lg font-bold tracking-tight text-[#173F35]">
                   Money Activity
@@ -730,8 +731,22 @@ function App() {
               </div>
             </div>
 
-            <div className="hidden rounded-xl border border-[#E4E8DE] bg-white px-3 py-2 text-xs font-medium text-[#657268] sm:block">
-              {transactions.length} {transactions.length === 1 ? 'entry' : 'entries'}
+            <div className="flex w-full items-center gap-3 sm:w-auto">
+              <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-[#E1E5DB] bg-white px-3 py-2.5 transition focus-within:border-[#6D9B83] focus-within:ring-2 focus-within:ring-[#DDF2E5] sm:w-64 sm:flex-none">
+                <Search size={17} className="shrink-0 text-[#8B9186]" />
+                <input
+                  type="search"
+                  placeholder="Search transactions..."
+                  aria-label="Search Money Activity transactions"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                  className="w-full min-w-0 bg-transparent text-sm text-[#34483B] outline-none placeholder:text-[#8B9186]"
+                />
+              </label>
+
+              <div className="shrink-0 rounded-xl border border-[#E4E8DE] bg-white px-3 py-2 text-xs font-medium text-[#657268]">
+                {transactions.length} {transactions.length === 1 ? 'entry' : 'entries'}
+              </div>
             </div>
           </div>
 
@@ -792,8 +807,8 @@ function App() {
                 type="button"
                 onClick={() => setTransactionFilter(filter.value)}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition ${transactionFilter === filter.value
-                    ? 'bg-[#173F35] text-white shadow-sm'
-                    : 'border border-[#E1E5DB] bg-white text-[#637066] hover:border-[#A9B9AB] hover:text-[#173F35]'
+                  ? 'bg-[#173F35] text-white shadow-sm'
+                  : 'border border-[#E1E5DB] bg-white text-[#637066] hover:border-[#A9B9AB] hover:text-[#173F35]'
                   }`}
               >
                 {filter.label}
@@ -1119,7 +1134,6 @@ function App() {
           </div>
 
         </section>
-
 
         <footer className="py-7 text-center text-xs text-stone-400">
           Thrive · Take control of your financial future
