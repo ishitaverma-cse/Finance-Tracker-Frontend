@@ -70,6 +70,10 @@ function App() {
   const [showTransactionForm, setShowTransactionForm] = useState(false)
   const [transactions, setTransactions] = useState([])
   const [transactionFilter, setTransactionFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [startDateFilter, setStartDateFilter] = useState('')
+  const [endDateFilter, setEndDateFilter] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false)
   const [transactionError, setTransactionError] = useState('')
   const [transactionToDelete, setTransactionToDelete] = useState(null)
@@ -173,6 +177,40 @@ function App() {
       ? ((totalIncome - totalExpenses) / totalIncome) * 100
       : 0
 
+
+  const filteredTransactions = transactions.filter((transaction) => {
+    const matchesType =
+      transactionFilter === 'all' ||
+      transaction.type === transactionFilter
+
+    const matchesCategory =
+      categoryFilter === 'all' ||
+      transaction.category === categoryFilter
+
+    const matchesStartDate =
+      !startDateFilter ||
+      transaction.dateISO >= startDateFilter
+
+    const matchesEndDate =
+      !endDateFilter ||
+      transaction.dateISO <= endDateFilter
+
+    const search = searchTerm.trim().toLowerCase()
+
+    const matchesSearch =
+      !search ||
+      transaction.title?.toLowerCase().includes(search) ||
+      transaction.description?.toLowerCase().includes(search) ||
+      transaction.category?.toLowerCase().includes(search)
+
+    return (
+      matchesType &&
+      matchesCategory &&
+      matchesStartDate &&
+      matchesEndDate &&
+      matchesSearch
+    )
+  })
 
   const handleAddTransaction = async (newTransaction) => {
     setTransactionError('')
@@ -375,6 +413,8 @@ function App() {
                 placeholder="Search transactions..."
                 aria-label="Search transactions"
                 className="w-44 bg-transparent text-sm outline-none placeholder:text-stone-400"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
               />
             </label>
 
@@ -739,6 +779,7 @@ function App() {
             </div>
           </div>
 
+
           {/* Filter chips */}
           <div className="flex flex-wrap items-center gap-2 px-5 pb-4 pt-6 sm:px-7">
             {[
@@ -751,15 +792,17 @@ function App() {
                 type="button"
                 onClick={() => setTransactionFilter(filter.value)}
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition ${transactionFilter === filter.value
-                  ? 'bg-[#173F35] text-white shadow-sm'
-                  : 'border border-[#E1E5DB] bg-white text-[#637066] hover:border-[#A9B9AB] hover:text-[#173F35]'
+                    ? 'bg-[#173F35] text-white shadow-sm'
+                    : 'border border-[#E1E5DB] bg-white text-[#637066] hover:border-[#A9B9AB] hover:text-[#173F35]'
                   }`}
               >
                 {filter.label}
                 <span className="ml-2 text-xs opacity-70">
                   {filter.value === 'all'
                     ? transactions.length
-                    : transactions.filter((transaction) => transaction.type === filter.value).length}
+                    : transactions.filter(
+                      (transaction) => transaction.type === filter.value
+                    ).length}
                 </span>
               </button>
             ))}
@@ -776,6 +819,87 @@ function App() {
               <span className="hidden sm:inline">Add transaction</span>
               <span className="sm:hidden">Add</span>
             </button>
+          </div>
+
+          {/* Advanced filters */}
+          <div className="grid grid-cols-1 gap-3 px-5 pb-5 sm:grid-cols-2 sm:px-7 lg:grid-cols-4">
+            <div>
+              <label
+                htmlFor="category-filter"
+                className="mb-1.5 block text-xs font-semibold text-[#637066]"
+              >
+                Category
+              </label>
+              <select
+                id="category-filter"
+                value={categoryFilter}
+                onChange={(event) => setCategoryFilter(event.target.value)}
+                className="w-full rounded-xl border border-[#E1E5DB] bg-white px-3 py-2.5 text-sm text-[#34483B] outline-none transition focus:border-[#6D9B83] focus:ring-2 focus:ring-[#DDF2E5]"
+              >
+                <option value="all">All categories</option>
+                {[...new Set(
+                  transactions
+                    .map((transaction) => transaction.category)
+                    .filter(Boolean)
+                )]
+                  .sort()
+                  .map((category) => (
+                    <option key={category} value={category}>
+                      {category}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="start-date-filter"
+                className="mb-1.5 block text-xs font-semibold text-[#637066]"
+              >
+                From date
+              </label>
+              <input
+                id="start-date-filter"
+                type="date"
+                value={startDateFilter}
+                max={endDateFilter || undefined}
+                onChange={(event) => setStartDateFilter(event.target.value)}
+                className="w-full rounded-xl border border-[#E1E5DB] bg-white px-3 py-2.5 text-sm text-[#34483B] outline-none transition focus:border-[#6D9B83] focus:ring-2 focus:ring-[#DDF2E5]"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="end-date-filter"
+                className="mb-1.5 block text-xs font-semibold text-[#637066]"
+              >
+                To date
+              </label>
+              <input
+                id="end-date-filter"
+                type="date"
+                value={endDateFilter}
+                min={startDateFilter || undefined}
+                onChange={(event) => setEndDateFilter(event.target.value)}
+                className="w-full rounded-xl border border-[#E1E5DB] bg-white px-3 py-2.5 text-sm text-[#34483B] outline-none transition focus:border-[#6D9B83] focus:ring-2 focus:ring-[#DDF2E5]"
+              />
+            </div>
+
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setTransactionFilter('all')
+                  setCategoryFilter('all')
+                  setStartDateFilter('')
+                  setEndDateFilter('')
+                  setSearchTerm('')
+                }}
+                className="w-full rounded-xl border border-[#E1E5DB] bg-white px-3 py-2.5 text-sm font-semibold text-[#637066] transition hover:border-[#A9B9AB] hover:bg-[#F3F6F0] hover:text-[#173F35]"
+              >
+                Clear all filters
+              </button>
+            </div>
           </div>
 
           {/* Transaction table */}
@@ -836,147 +960,139 @@ function App() {
                         </td>
                       </tr>
                     ) : (
-                      transactions
-                        .filter((transaction) =>
-                          transactionFilter === 'all' ||
-                          transaction.type === transactionFilter
-                        )
-                        .map((transaction) => {
-                          const isIncome = transaction.type === 'income'
+                      filteredTransactions.map((transaction) => {
+                        const isIncome = transaction.type === 'income'
 
-                          return (
-                            <tr
-                              key={transaction.id}
-                              className="group border-b border-[#EEF0E9] transition-colors duration-200 hover:bg-[#EAF5EC]"
-                            >
-                              <td className="px-5 py-4">
-                                <div className="flex items-center gap-3">
-                                  <div
-                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isIncome
-                                      ? 'bg-[#DDF2E5] text-[#177452]'
-                                      : 'bg-[#FBE8E3] text-[#B95B51]'
-                                      }`}
-                                  >
-                                    {isIncome ? (
-                                      <ArrowDownLeft size={19} />
-                                    ) : (
-                                      <ArrowUpRight size={19} />
-                                    )}
-                                  </div>
-
-                                  <div className="min-w-0">
-                                    <p className="max-w-[220px] truncate text-sm font-semibold text-[#243A30]">
-                                      {transaction.title}
-                                    </p>
-
-                                    <p
-                                      className={`mt-1 text-xs ${isIncome ? 'text-[#177452]' : 'text-[#B95B51]'
-                                        }`}
-                                    >
-                                      {isIncome ? 'Income' : 'Expense'}
-                                      <span className="text-[#A0A69D]"> · </span>
-                                      <span className="text-[#7B8177]">
-                                        {transaction.category}
-                                      </span>
-                                    </p>
-                                  </div>
-                                </div>
-                              </td>
-
-                              <td className="px-4 py-4">
-                                {transaction.description?.trim() ? (
-                                  <p
-                                    title={transaction.description}
-                                    className="max-w-[280px] truncate text-sm text-[#68766E]"
-                                  >
-                                    {transaction.description}
-                                  </p>
-                                ) : (
-                                  <span className="text-sm text-[#A0A69D]">—</span>
-                                )}
-                              </td>
-
-                              <td className="whitespace-nowrap px-4 py-4 text-sm text-[#7B8177]">
-                                {transaction.date}
-                              </td>
-
-                              <td className="w-[170px] whitespace-nowrap px-6 py-4 text-right">
-                                <span
-                                  className={`inline-block min-w-[110px] text-right text-sm font-bold tabular-nums ${isIncome ? 'text-[#177452]' : 'text-[#B95B51]'
+                        return (
+                          <tr
+                            key={transaction.id}
+                            className="group border-b border-[#EEF0E9] transition-colors duration-200 hover:bg-[#EAF5EC]"
+                          >
+                            <td className="px-5 py-4">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isIncome
+                                    ? 'bg-[#DDF2E5] text-[#177452]'
+                                    : 'bg-[#FBE8E3] text-[#B95B51]'
                                     }`}
                                 >
-                                  {isIncome ? '+' : '−'}{formatCurrency(transaction.amount)}
-                                </span>
-                              </td>
-
-
-                              <td className="w-[80px] px-5 py-4 text-right">
-                                <div className="relative inline-block">
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      setOpenActionMenuId((currentId) =>
-                                        currentId === transaction.id ? null : transaction.id
-                                      )
-                                    }
-                                    aria-label={`Actions for ${transaction.title}`}
-                                    aria-expanded={openActionMenuId === transaction.id}
-                                    aria-haspopup="menu"
-                                    title="Transaction actions"
-                                    className={`inline-flex h-9 w-9 items-center justify-center rounded-xl transition focus:outline-none focus:ring-2 focus:ring-[#A9B9AB] ${openActionMenuId === transaction.id
-                                      ? 'bg-[#EAF5EC] text-[#173F35]'
-                                      : 'text-[#A6ADA2] hover:bg-[#EAF5EC] hover:text-[#173F35]'
-                                      }`}
-                                  >
-                                    <MoreVertical size={18} />
-                                  </button>
-
-                                  {openActionMenuId === transaction.id && (
-                                    <div
-                                      role="menu"
-                                      className="absolute right-0 top-full z-[100] mt-1 w-40 rounded-xl border border-[#E1E6DC] bg-white p-1.5 text-left shadow-xl"
-                                    >
-                                      <button
-                                        type="button"
-                                        role="menuitem"
-                                        onClick={() => {
-                                          setTransactionToEdit(transaction)
-                                          setOpenActionMenuId(null)
-                                          setShowTransactionForm(true)
-                                        }}
-                                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#34483B] transition hover:bg-[#EAF5EC]"
-                                      >
-                                        <Pencil size={15} />
-                                        Edit
-                                      </button>
-
-                                      <button
-                                        type="button"
-                                        role="menuitem"
-                                        onClick={() => {
-                                          setTransactionToDelete(transaction)
-                                          setOpenActionMenuId(null)
-                                        }}
-                                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#B95B51] transition hover:bg-[#FBE8E3]"
-                                      >
-                                        <Trash2 size={15} />
-                                        Delete
-                                      </button>
-                                    </div>
+                                  {isIncome ? (
+                                    <ArrowDownLeft size={19} />
+                                  ) : (
+                                    <ArrowUpRight size={19} />
                                   )}
                                 </div>
-                              </td>
 
-                            </tr>
-                          )
-                        })
+                                <div className="min-w-0">
+                                  <p className="max-w-[220px] truncate text-sm font-semibold text-[#243A30]">
+                                    {transaction.title}
+                                  </p>
+
+                                  <p
+                                    className={`mt-1 text-xs ${isIncome ? 'text-[#177452]' : 'text-[#B95B51]'
+                                      }`}
+                                  >
+                                    {isIncome ? 'Income' : 'Expense'}
+                                    <span className="text-[#A0A69D]"> · </span>
+                                    <span className="text-[#7B8177]">
+                                      {transaction.category}
+                                    </span>
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="px-4 py-4">
+                              {transaction.description?.trim() ? (
+                                <p
+                                  title={transaction.description}
+                                  className="max-w-[280px] truncate text-sm text-[#68766E]"
+                                >
+                                  {transaction.description}
+                                </p>
+                              ) : (
+                                <span className="text-sm text-[#A0A69D]">—</span>
+                              )}
+                            </td>
+
+                            <td className="whitespace-nowrap px-4 py-4 text-sm text-[#7B8177]">
+                              {transaction.date}
+                            </td>
+
+                            <td className="w-[170px] whitespace-nowrap px-6 py-4 text-right">
+                              <span
+                                className={`inline-block min-w-[110px] text-right text-sm font-bold tabular-nums ${isIncome ? 'text-[#177452]' : 'text-[#B95B51]'
+                                  }`}
+                              >
+                                {isIncome ? '+' : '−'}{formatCurrency(transaction.amount)}
+                              </span>
+                            </td>
+
+
+                            <td className="w-[80px] px-5 py-4 text-right">
+                              <div className="relative inline-block">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setOpenActionMenuId((currentId) =>
+                                      currentId === transaction.id ? null : transaction.id
+                                    )
+                                  }
+                                  aria-label={`Actions for ${transaction.title}`}
+                                  aria-expanded={openActionMenuId === transaction.id}
+                                  aria-haspopup="menu"
+                                  title="Transaction actions"
+                                  className={`inline-flex h-9 w-9 items-center justify-center rounded-xl transition focus:outline-none focus:ring-2 focus:ring-[#A9B9AB] ${openActionMenuId === transaction.id
+                                    ? 'bg-[#EAF5EC] text-[#173F35]'
+                                    : 'text-[#A6ADA2] hover:bg-[#EAF5EC] hover:text-[#173F35]'
+                                    }`}
+                                >
+                                  <MoreVertical size={18} />
+                                </button>
+
+                                {openActionMenuId === transaction.id && (
+                                  <div
+                                    role="menu"
+                                    className="absolute right-0 top-full z-[100] mt-1 w-40 rounded-xl border border-[#E1E6DC] bg-white p-1.5 text-left shadow-xl"
+                                  >
+                                    <button
+                                      type="button"
+                                      role="menuitem"
+                                      onClick={() => {
+                                        setTransactionToEdit(transaction)
+                                        setOpenActionMenuId(null)
+                                        setShowTransactionForm(true)
+                                      }}
+                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#34483B] transition hover:bg-[#EAF5EC]"
+                                    >
+                                      <Pencil size={15} />
+                                      Edit
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      role="menuitem"
+                                      onClick={() => {
+                                        setTransactionToDelete(transaction)
+                                        setOpenActionMenuId(null)
+                                      }}
+                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#B95B51] transition hover:bg-[#FBE8E3]"
+                                    >
+                                      <Trash2 size={15} />
+                                      Delete
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+
+                          </tr>
+                        )
+                      })
                     )}
 
                     {transactions.length > 0 &&
-                      transactions.filter((transaction) =>
-                        transactionFilter === 'all' ||
-                        transaction.type === transactionFilter
-                      ).length === 0 && (
+                      filteredTransactions.length === 0 && (
                         <tr>
                           <td colSpan={5} className="px-5 py-12 text-center">
                             <p className="font-semibold text-[#173F35]">
@@ -996,10 +1112,7 @@ function App() {
             {transactions.length > 0 && (
               <p className="mt-3 px-1 text-xs text-[#8B9186]">
                 Showing{' '}
-                {transactions.filter((transaction) =>
-                  transactionFilter === 'all' ||
-                  transaction.type === transactionFilter
-                ).length}{' '}
+                {filteredTransactions.length}{' '}
                 of {transactions.length} transactions
               </p>
             )}
