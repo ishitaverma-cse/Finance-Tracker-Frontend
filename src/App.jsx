@@ -38,12 +38,7 @@ import Sidebar from './components/Sidebar'
 import StatCard from './components/StatCard'
 import TransactionForm from './components/TransactionForm'
 
-import {
-  summaryCards,
-  monthlyOverview,
-  expenseBreakdown,
-  recentTransactions,
-} from './data/dashboardData'
+import { summaryCards } from './data/dashboardData'
 
 const API_URL = import.meta.env.VITE_API_URL
 
@@ -171,6 +166,59 @@ function App() {
     .reduce((total, transaction) => total + Number(transaction.amount), 0)
 
   const totalBalance = totalIncome - totalExpenses
+
+  // Dynamic monthly income and expense totals
+  const monthlyChartData = (() => {
+    const monthlyTotals = {}
+
+    transactions.forEach((transaction) => {
+      const date = new Date(`${transaction.dateISO}T12:00:00`)
+
+      const monthKey = `${date.getFullYear()}-${String(
+        date.getMonth() + 1
+      ).padStart(2, '0')}`
+
+      if (!monthlyTotals[monthKey]) {
+        monthlyTotals[monthKey] = {
+          monthKey,
+          month: date.toLocaleDateString('en-US', {
+            month: 'short',
+            year: '2-digit',
+          }),
+          income: 0,
+          expenses: 0,
+        }
+      }
+
+      if (transaction.type === 'income') {
+        monthlyTotals[monthKey].income += Number(transaction.amount)
+      } else if (transaction.type === 'expense') {
+        monthlyTotals[monthKey].expenses += Number(transaction.amount)
+      }
+    })
+
+    return Object.values(monthlyTotals)
+      .sort((a, b) => a.monthKey.localeCompare(b.monthKey))
+      .slice(-6)
+  })()
+
+  // Dynamic category-wise expense totals
+  const expenseChartData = (() => {
+    const categoryTotals = {}
+
+    transactions.forEach((transaction) => {
+      if (transaction.type !== 'expense') return
+
+      const category = transaction.category || 'Uncategorized'
+
+      categoryTotals[category] =
+        (categoryTotals[category] || 0) + Number(transaction.amount)
+    })
+
+    return Object.entries(categoryTotals)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+  })()
 
   const savingsRate =
     totalIncome > 0
@@ -556,61 +604,75 @@ function App() {
             </div>
 
             <div className="mt-6 h-72 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={monthlyOverview}
-                  margin={{
-                    top: 8,
-                    right: 4,
-                    left: -16,
-                    bottom: 0,
-                  }}
-                  barGap={6}
-                >
-                  <CartesianGrid
-                    stroke="#f0eee8"
-                    strokeDasharray="4 4"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="month"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: '#a8a29e', fontSize: 12 }}
-                    dy={10}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fill: '#a8a29e', fontSize: 11 }}
-                    tickFormatter={(value) =>
-                      `${value / 1000}k`
-                    }
-                  />
-                  <Tooltip
-                    formatter={(value) => formatCurrency(value)}
-                    contentStyle={{
-                      borderRadius: 12,
-                      border: '1px solid #e7e5e4',
-                      fontSize: 12,
+              {monthlyChartData.length === 0 ? (
+                <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-[#DDE4D8] bg-white/60 px-6 text-center">
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#E8F3EC] text-[#047857]">
+                    <ArrowUpRight size={22} />
+                  </div>
+
+                  <p className="text-sm font-semibold text-[#26382D]">
+                    Your monthly overview starts here
+                  </p>
+
+                  <p className="mt-1 max-w-xs text-xs leading-5 text-[#7A857B]">
+                    Add your first income or expense to see how your finances change month by month.
+                  </p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={monthlyChartData}
+                    margin={{
+                      top: 8,
+                      right: 4,
+                      left: -16,
+                      bottom: 0,
                     }}
-                  />
-                  <Bar
-                    dataKey="income"
-                    name="Income"
-                    fill="#047857"
-                    radius={[5, 5, 0, 0]}
-                    maxBarSize={24}
-                  />
-                  <Bar
-                    dataKey="expenses"
-                    name="Expenses"
-                    fill="#fbbf24"
-                    radius={[5, 5, 0, 0]}
-                    maxBarSize={24}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+                    barGap={6}
+                  >
+                    <CartesianGrid
+                      stroke="#f0eee8"
+                      strokeDasharray="4 4"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="month"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#a8a29e', fontSize: 12 }}
+                      dy={10}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#a8a29e', fontSize: 11 }}
+                      tickFormatter={(value) => `${value / 1000}k`}
+                    />
+                    <Tooltip
+                      formatter={(value) => formatCurrency(value)}
+                      contentStyle={{
+                        borderRadius: 12,
+                        border: '1px solid #e7e5e4',
+                        fontSize: 12,
+                      }}
+                    />
+                    <Bar
+                      dataKey="income"
+                      name="Income"
+                      fill="#047857"
+                      radius={[5, 5, 0, 0]}
+                      maxBarSize={24}
+                    />
+                    <Bar
+                      dataKey="expenses"
+                      name="Expenses"
+                      fill="#fbbf24"
+                      radius={[5, 5, 0, 0]}
+                      maxBarSize={24}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
 
             <div className="mt-3 flex flex-wrap gap-5 text-xs text-stone-500">
@@ -637,51 +699,66 @@ function App() {
             </div>
 
             <div className="relative mt-3 h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={expenseBreakdown}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={62}
-                    outerRadius={88}
-                    paddingAngle={3}
-                    stroke="none"
-                  >
-                    {expenseBreakdown.map((entry, index) => (
-                      <Cell
-                        key={entry.name}
-                        fill={
-                          chartColors[
-                          index % chartColors.length
-                          ]
-                        }
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value) => formatCurrency(value)}
-                    contentStyle={{
-                      borderRadius: 12,
-                      border: '1px solid #e7e5e4',
-                      fontSize: 12,
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+              {expenseChartData.length === 0 ? (
+                <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-dashed border-[#DDE4D8] bg-white/60 px-5 text-center">
+                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#FFF4D8] text-[#A16207]">
+                    <PieChart size={22} />
+                  </div>
 
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-xs text-stone-500">
-                  Total spent
-                </span>
-                <span className="mt-1 text-xl font-bold text-emerald-950">
-                  ₹32,450
-                </span>
-              </div>
+                  <p className="text-sm font-semibold text-[#26382D]">
+                    Your spending story starts here
+                  </p>
+
+                  <p className="mt-1 max-w-xs text-xs leading-5 text-[#7A857B]">
+                    Add your first expense to see a breakdown of where your money goes.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={expenseChartData}
+                        dataKey="value"
+                        nameKey="name"
+                        innerRadius={62}
+                        outerRadius={88}
+                        paddingAngle={3}
+                        stroke="none"
+                      >
+                        {expenseChartData.map((entry, index) => (
+                          <Cell
+                            key={entry.name}
+                            fill={chartColors[index % chartColors.length]}
+                          />
+                        ))}
+                      </Pie>
+
+                      <Tooltip
+                        formatter={(value) => formatCurrency(value)}
+                        contentStyle={{
+                          borderRadius: 12,
+                          border: '1px solid #e7e5e4',
+                          fontSize: 12,
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+
+                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-xs text-stone-500">
+                      Total spent
+                    </span>
+                    <span className="mt-1 text-xl font-bold text-emerald-950">
+                      {formatCurrency(totalExpenses)}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="mt-2 space-y-3">
-              {expenseBreakdown.map((item, index) => (
+              {expenseChartData.map((item, index) => (
                 <div
                   key={item.name}
                   className="flex items-center justify-between gap-3 text-xs"
