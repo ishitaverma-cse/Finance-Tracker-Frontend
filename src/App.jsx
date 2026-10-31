@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { toast, ToastContainer } from 'react-toastify'
+import TransactionsPage from './components/TransactionsPage'
 import 'react-toastify/dist/ReactToastify.css'
 import {
   ArrowDownLeft,
@@ -14,7 +15,9 @@ import {
   Search,
   Trash2,
   Wallet,
-  X,
+  Menu,
+  ChevronRight,
+  Activity,
 } from 'lucide-react'
 
 import {
@@ -76,6 +79,8 @@ function App() {
   const [transactionToEdit, setTransactionToEdit] = useState(null)
   const [openActionMenuId, setOpenActionMenuId] = useState(null)
   const [isUpdatingTransaction, setIsUpdatingTransaction] = useState(false)
+  const [activePage, setActivePage] = useState('dashboard')
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
 
   useEffect(() => {
     if (!isAuthenticated || !token) {
@@ -260,6 +265,11 @@ function App() {
     )
   })
 
+  // Latest 3 transactions for Dashboard
+  const recentTransactions = [...transactions]
+    .sort((a, b) => b.dateISO.localeCompare(a.dateISO))
+    .slice(0, 3)
+
   const handleAddTransaction = async (newTransaction) => {
     setTransactionError('')
 
@@ -431,82 +441,284 @@ function App() {
     }
   }
 
+  // Temporary pages for sidebar navigation
+  if (activePage !== 'dashboard') {
+    const pageDetails = {
+      transactions: {
+        title: 'Transactions',
+        description: 'A complete overview of your money in and money out.',
+      },
+      budgets: {
+        title: 'Budgets',
+        description: 'Plan your spending and keep your finances on track.',
+      },
+      reports: {
+        title: 'Reports',
+        description: 'Understand your financial activity through detailed insights.',
+      },
+      settings: {
+        title: 'Settings',
+        description: 'Manage your account and application preferences.',
+      },
+    }
+
+    const currentPage = pageDetails[activePage]
+
+    return (
+      <div className="min-h-screen bg-[#f8f7f2] text-stone-800 lg:flex">
+
+        {/* Mobile Sidebar Drawer */}
+        <div
+          className={`fixed inset-0 z-[1000] lg:hidden ${isMobileSidebarOpen
+            ? 'pointer-events-auto'
+            : 'pointer-events-none'
+            }`}
+        >
+          {/* Backdrop */}
+          <button
+            type="button"
+            aria-label="Close navigation menu"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className={`absolute inset-0 bg-stone-950/40 backdrop-blur-[2px] transition-opacity duration-300 ${isMobileSidebarOpen ? 'opacity-100' : 'opacity-0'
+              }`}
+          />
+
+          {/* Sliding Sidebar */}
+          <div
+            className={`absolute inset-y-0 left-0 w-[min(20rem,88vw)] shadow-2xl transition-transform duration-300 ${isMobileSidebarOpen
+              ? 'translate-x-0'
+              : '-translate-x-full'
+              }`}
+          >
+            <Sidebar
+              activePage={activePage}
+              setActivePage={setActivePage}
+              isMobile
+              onClose={() => setIsMobileSidebarOpen(false)}
+            />
+          </div>
+        </div>
+
+        <div className="hidden lg:block">
+          <Sidebar
+            activePage={activePage}
+            setActivePage={setActivePage}
+          />
+        </div>
+
+        <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-9 lg:py-8">
+
+          <header className="mb-8">
+            {/* Breadcrumb */}
+            <div className="flex items-center gap-2.5 border-b border-stone-200 pb-5">
+              <button
+                type="button"
+                onClick={() => setIsMobileSidebarOpen(true)}
+                aria-label="Open navigation menu"
+                className="shrink-0 rounded-xl border border-stone-200 bg-white p-2.5 text-emerald-800 shadow-sm transition hover:bg-emerald-50 lg:hidden"
+              >
+                <Menu size={21} strokeWidth={2.2} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActivePage('dashboard')}
+                className="text-sm font-semibold text-stone-500 hover:text-emerald-800 ps-2"
+              >
+                Dashboard
+              </button>
+
+              <ChevronRight size={18} strokeWidth={2} className="text-stone-500" />
+
+              <span className="text-sm font-bold text-emerald-800">
+                {currentPage?.title}
+              </span>
+            </div>
+
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-emerald-950">
+              {currentPage?.title}
+            </h1>
+
+            <p className="mt-2 text-sm text-stone-500">
+              {currentPage?.description}
+            </p>
+          </header>
+
+          {activePage === 'transactions' ? (
+            <TransactionsPage
+              transactions={transactions}
+              filteredTransactions={filteredTransactions}
+              totalIncome={totalIncome}
+              totalExpenses={totalExpenses}
+              formatCurrency={formatCurrency}
+
+              transactionFilter={transactionFilter}
+              setTransactionFilter={setTransactionFilter}
+              categoryFilter={categoryFilter}
+              setCategoryFilter={setCategoryFilter}
+              startDateFilter={startDateFilter}
+              setStartDateFilter={setStartDateFilter}
+              endDateFilter={endDateFilter}
+              setEndDateFilter={setEndDateFilter}
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+
+              isLoadingTransactions={isLoadingTransactions}
+              transactionError={transactionError}
+
+              openActionMenuId={openActionMenuId}
+              setOpenActionMenuId={setOpenActionMenuId}
+              setShowTransactionForm={setShowTransactionForm}
+              setTransactionToEdit={setTransactionToEdit}
+              setTransactionToDelete={setTransactionToDelete}
+
+              showTransactionForm={showTransactionForm}
+              transactionToEdit={transactionToEdit}
+              handleAddTransaction={handleAddTransaction}
+              handleUpdateTransaction={handleUpdateTransaction}
+              isUpdatingTransaction={isUpdatingTransaction}
+
+              transactionToDelete={transactionToDelete}
+              handleDeleteTransaction={handleDeleteTransaction}
+              isDeletingTransaction={isDeletingTransaction}
+            />
+          ) : (
+            <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
+              <h2 className="text-lg font-semibold text-emerald-950">
+                Coming up next
+              </h2>
+
+              <p className="mt-2 text-sm text-stone-500">
+                We're building this section of Thrive. Stay tuned!
+              </p>
+            </section>
+          )}
+        </main>
+
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          theme="light"
+        />
+      </div>
+    )
+  }
+
 
   return (
     <div className="min-h-screen bg-[#f8f7f2] text-stone-800 lg:flex">
+
+      {/* Mobile Sidebar Drawer */}
+      <div
+        className={`fixed inset-0 z-[1000] lg:hidden ${isMobileSidebarOpen
+          ? 'pointer-events-auto'
+          : 'pointer-events-none'
+          }`}
+      >
+        {/* Backdrop */}
+        <button
+          type="button"
+          aria-label="Close navigation menu"
+          onClick={() => setIsMobileSidebarOpen(false)}
+          className={`absolute inset-0 bg-stone-950/40 backdrop-blur-[2px] transition-opacity duration-300 ${isMobileSidebarOpen ? 'opacity-100' : 'opacity-0'
+            }`}
+        />
+
+        {/* Sliding Sidebar */}
+        <div
+          className={`absolute inset-y-0 left-0 w-[min(18rem,85vw)] shadow-2xl transition-transform duration-300 ${isMobileSidebarOpen
+            ? 'translate-x-0'
+            : '-translate-x-full'
+            }`}
+        >
+          <Sidebar
+            activePage={activePage}
+            setActivePage={setActivePage}
+            isMobile
+            onClose={() => setIsMobileSidebarOpen(false)}
+          />
+        </div>
+      </div>
+
       <div className="hidden lg:block">
-        <Sidebar />
+        <Sidebar
+          activePage={activePage}
+          setActivePage={setActivePage}
+        />
       </div>
 
       <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-9 lg:py-8">
         {/* Top bar */}
-        <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p className="text-sm font-medium text-emerald-700">
-              Friday, October 23, 2026
-            </p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-emerald-950 sm:text-3xl">
-              Good afternoon!
-            </h1>
-            <p className="mt-2 text-sm text-stone-500">
-              Here's what's happening with your money.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <label className="hidden items-center gap-2 rounded-xl border border-stone-200 bg-white px-3 py-2.5 md:flex">
-              <Search size={17} className="text-stone-400" />
-              <input
-                type="search"
-                placeholder="Search transactions..."
-                aria-label="Search transactions"
-                className="w-44 bg-transparent text-sm outline-none placeholder:text-stone-400"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-              />
-            </label>
-
-            <button
-              type="button"
-              aria-label="Notifications"
-              className="relative rounded-xl border border-stone-200 bg-white p-3 text-stone-600 transition hover:bg-emerald-50"
-            >
-              <Bell size={19} />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500" />
-            </button>
-
-
-            <div className="relative">
+        <header className="mb-8 border-b border-stone-200 pb-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex min-w-0 items-start gap-3">
+              {/* Mobile Hamburger */}
               <button
                 type="button"
-                onClick={() => setIsProfileOpen((open) => !open)}
-                aria-expanded={isProfileOpen}
-                aria-haspopup="true"
-                className="flex items-center gap-2 rounded-xl border border-stone-200 bg-white p-2 transition hover:bg-emerald-50"
+                onClick={() => setIsMobileSidebarOpen(true)}
+                aria-label="Open navigation menu"
+                className="mt-1 shrink-0 rounded-xl border border-stone-200 bg-white p-2.5 text-emerald-800 shadow-sm transition hover:bg-emerald-50 lg:hidden"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-800 text-sm font-bold text-white">
-                  {(user?.name || 'T').charAt(0).toUpperCase()}
-                </div>
-
-                <div className="hidden text-left sm:block">
-                  <p className="text-sm font-semibold text-stone-800">
-                    {user?.name || 'Thrive User'}
-                  </p>
-                  <p className="text-xs text-stone-500">
-                    Personal Account
-                  </p>
-                </div>
-
-                <ChevronDown
-                  size={16}
-                  className={`hidden text-stone-400 transition-transform sm:block ${isProfileOpen ? 'rotate-180' : ''
-                    }`}
-                />
+                <Menu size={21} strokeWidth={2.2} />
               </button>
 
-              {isProfileOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-stone-200 bg-white p-2 shadow-lg">
-                  <div className="border-b border-stone-100 px-3 py-2">
+              {/* Date and Greeting */}
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-emerald-700">
+                  {new Date().toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </p>
+
+                <h1 className="mt-1 text-2xl font-bold tracking-tight text-emerald-950 sm:text-3xl">
+                  Good afternoon, {user?.name || 'there'}! 👋
+                </h1>
+
+                <p className="mt-2 text-sm text-stone-500">
+                  Let's see what's happening with your money.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <label className="hidden items-center gap-2 rounded-xl border border-stone-200 bg-white px-3 py-2.5 md:flex">
+                <Search size={17} className="text-stone-400" />
+                <input
+                  type="search"
+                  placeholder="Search transactions..."
+                  aria-label="Search transactions"
+                  className="w-44 bg-transparent text-sm outline-none placeholder:text-stone-400"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                />
+              </label>
+
+              <button
+                type="button"
+                aria-label="Notifications"
+                className="relative rounded-xl border border-stone-200 bg-white p-3 text-stone-600 transition hover:bg-emerald-50"
+              >
+                <Bell size={19} />
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500" />
+              </button>
+
+
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsProfileOpen((open) => !open)}
+                  aria-expanded={isProfileOpen}
+                  aria-haspopup="true"
+                  className="flex items-center gap-2 rounded-xl border border-stone-200 bg-white p-2 transition hover:bg-emerald-50"
+                >
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-800 text-sm font-bold text-white">
+                    {(user?.name || 'T').charAt(0).toUpperCase()}
+                  </div>
+
+                  <div className="hidden text-left sm:block">
                     <p className="text-sm font-semibold text-stone-800">
                       {user?.name || 'Thrive User'}
                     </p>
@@ -515,34 +727,59 @@ function App() {
                     </p>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsProfileOpen(false)
-                      logout()
-                      setAuthScreen('login')
-                    }}
-                    className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50"
-                  >
-                    <LogOut size={16} />
-                    Sign out
-                  </button>
-                </div>
-              )}
-            </div>
+                  <ChevronDown
+                    size={16}
+                    className={`hidden text-stone-400 transition-transform sm:block ${isProfileOpen ? 'rotate-180' : ''
+                      }`}
+                  />
+                </button>
 
+                {isProfileOpen && (
+                  <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-stone-200 bg-white p-2 shadow-lg">
+                    <div className="border-b border-stone-100 px-3 py-2">
+                      <p className="text-sm font-semibold text-stone-800">
+                        {user?.name || 'Thrive User'}
+                      </p>
+                      <p className="text-xs text-stone-500">
+                        Personal Account
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsProfileOpen(false)
+                        logout()
+                        setAuthScreen('login')
+                      }}
+                      className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50"
+                    >
+                      <LogOut size={16} />
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
+
+            </div>
           </div>
         </header>
 
         {/* Page title and action */}
         <section className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-bold text-emerald-950">
-              Financial Overview
-            </h2>
-            <p className="mt-1 text-sm text-stone-500">
-              Track your income, spending, and savings.
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#527A5B] text-white shadow-md shadow-[#527A5B]/20">
+              <Wallet size={22} strokeWidth={2.2} />
+            </div>
+
+            <div>
+              <h2 className="text-lg font-bold text-emerald-950">
+                Financial Overview
+              </h2>
+              <p className="mt-1 text-sm text-stone-500">
+                Track your income, spending, and savings.
+              </p>
+            </div>
           </div>
           <button
             type="button"
@@ -786,430 +1023,155 @@ function App() {
           </div>
         </section>
 
-        {/* Recent transactions */}
-
-        {/* Money Activity */}
-        <section className="mt-6 overflow-hidden rounded-3xl border border-[#E6E9DF] bg-[#F7F8F4] shadow-sm">
-
+        {/* Recent Transactions */}
+        <section className="mt-6 overflow-hidden rounded-3xl border border-[#E6E9DF] bg-white shadow-sm">
           {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-4 px-5 pb-5 pt-6 sm:px-7 sm:pt-7">
+          <div className="flex items-center justify-between gap-4 border-b border-[#EEF0E9] px-5 py-5 sm:px-7">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#173F35] text-white">
-                <Wallet size={21} />
-              </div>
 
-              <div>
-                <h3 className="text-lg font-bold tracking-tight text-[#173F35]">
-                  Money Activity
-                </h3>
-                <p className="mt-1 text-sm text-[#7B8177]">
-                  Your financial life, at a glance
-                </p>
-              </div>
-            </div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 Sidebar-0 items-center justify-center rounded-2xl bg-[#527A5B] text-white shadow-md shadow-[#527A5B]/20">
+                  <Activity size={22} strokeWidth={2.2} />
+                </div>
 
-            <div className="flex w-full items-center gap-3 sm:w-auto">
-              <label className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-[#E1E5DB] bg-white px-3 py-2.5 transition focus-within:border-[#6D9B83] focus-within:ring-2 focus-within:ring-[#DDF2E5] sm:w-64 sm:flex-none">
-                <Search size={17} className="shrink-0 text-[#8B9186]" />
-                <input
-                  type="search"
-                  placeholder="Search transactions..."
-                  aria-label="Search Money Activity transactions"
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  className="w-full min-w-0 bg-transparent text-sm text-[#34483B] outline-none placeholder:text-[#8B9186]"
-                />
-              </label>
+                <div>
+                  <div className="flex items-center gap-2.5">
+                    <h2 className="text-lg font-bold text-emerald-950">
+                      Recent Transactions
+                    </h2>
 
-              <div className="shrink-0 rounded-xl border border-[#E4E8DE] bg-white px-3 py-2 text-xs font-medium text-[#657268]">
-                {transactions.length} {transactions.length === 1 ? 'entry' : 'entries'}
+                    <span className="rounded-lg bg-[#EAF2E8] px-2.5 py-1 text-[11px] font-extrabold tracking-wide text-[#527A5B]">
+                      {recentTransactions.length} RECENT
+                    </span>
+                  </div>
+
+                  <p className="mt-1 text-[13px] text-stone-500">
+                    Your latest financial activity, at a glance.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* Loading and errors */}
-          <div className="px-5 sm:px-7">
-            {isLoadingTransactions && (
-              <p className="mb-4 rounded-xl bg-white px-4 py-3 text-sm text-stone-500" role="status">
-                Loading your transactions...
-              </p>
-            )}
-
-            {transactionError && (
-              <p className="mb-4 rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700" role="alert">
-                {transactionError}
-              </p>
-            )}
-          </div>
-
-          {/* Money in / Money out */}
-          <div className="grid grid-cols-2 gap-3 px-5 sm:gap-4 sm:px-7">
-            <div className="rounded-2xl border border-[#E1EAE0] bg-white p-4 sm:p-5">
-              <div className="flex items-center gap-2 text-sm font-medium text-[#738076]">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#DDF2E5] text-[#177452]">
-                  <ArrowDownLeft size={17} />
-                </span>
-                Money in
-              </div>
-              <p className="mt-3 break-words text-xl font-bold tracking-tight text-[#177452] sm:text-2xl">
-                {formatCurrency(totalIncome)}
-              </p>
-              <p className="mt-1 text-xs text-[#899187]">Recorded income</p>
-            </div>
-
-            <div className="rounded-2xl border border-[#EEE3DC] bg-white p-4 sm:p-5">
-              <div className="flex items-center gap-2 text-sm font-medium text-[#738076]">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FBE8E3] text-[#B95B51]">
-                  <ArrowUpRight size={17} />
-                </span>
-                Money out
-              </div>
-              <p className="mt-3 break-words text-xl font-bold tracking-tight text-[#B95B51] sm:text-2xl">
-                {formatCurrency(totalExpenses)}
-              </p>
-              <p className="mt-1 text-xs text-[#899187]">Recorded expenses</p>
-            </div>
-          </div>
-
-
-          {/* Filter chips */}
-          <div className="flex flex-wrap items-center gap-2 px-5 pb-4 pt-6 sm:px-7">
-            {[
-              { label: 'All activity', value: 'all' },
-              { label: 'Income', value: 'income' },
-              { label: 'Expenses', value: 'expense' },
-            ].map((filter) => (
-              <button
-                key={filter.value}
-                type="button"
-                onClick={() => setTransactionFilter(filter.value)}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${transactionFilter === filter.value
-                  ? 'bg-[#173F35] text-white shadow-sm'
-                  : 'border border-[#E1E5DB] bg-white text-[#637066] hover:border-[#A9B9AB] hover:text-[#173F35]'
-                  }`}
-              >
-                {filter.label}
-                <span className="ml-2 text-xs opacity-70">
-                  {filter.value === 'all'
-                    ? transactions.length
-                    : transactions.filter(
-                      (transaction) => transaction.type === filter.value
-                    ).length}
-                </span>
-              </button>
-            ))}
 
             <button
               type="button"
-              onClick={() => {
-                setTransactionToEdit(null)
-                setShowTransactionForm(true)
-              }}
-              className="ml-auto inline-flex items-center gap-2 rounded-full bg-[#173F35] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#245548] focus:outline-none focus:ring-2 focus:ring-[#6D9B83] focus:ring-offset-2"
+              onClick={() => setActivePage('transactions')}
+              className="flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold text-[#527A5B] transition hover:bg-[#F2F6F0]"
             >
-              <CirclePlus size={16} />
-              <span className="hidden sm:inline">Add transaction</span>
-              <span className="sm:hidden">Add</span>
+              View all
+              <ChevronRight size={17} strokeWidth={2.5} />
             </button>
           </div>
 
-          {/* Advanced filters */}
-          <div className="grid grid-cols-1 gap-3 px-5 pb-5 sm:grid-cols-2 sm:px-7 lg:grid-cols-4">
-            <div>
-              <label
-                htmlFor="category-filter"
-                className="mb-1.5 block text-xs font-semibold text-[#637066]"
-              >
-                Category
-              </label>
-              <select
-                id="category-filter"
-                value={categoryFilter}
-                onChange={(event) => setCategoryFilter(event.target.value)}
-                className="w-full rounded-xl border border-[#E1E5DB] bg-white px-3 py-2.5 text-sm text-[#34483B] outline-none transition focus:border-[#6D9B83] focus:ring-2 focus:ring-[#DDF2E5]"
-              >
-                <option value="all">All categories</option>
-                {[...new Set(
-                  transactions
-                    .map((transaction) => transaction.category)
-                    .filter(Boolean)
-                )]
-                  .sort()
-                  .map((category) => (
-                    <option key={category} value={category}>
-                      {category}
-                    </option>
-                  ))}
-              </select>
-            </div>
+          {/* Transaction List */}
+          <div className="px-5 sm:px-7">
 
-            <div>
-              <label
-                htmlFor="start-date-filter"
-                className="mb-1.5 block text-xs font-semibold text-[#637066]"
-              >
-                From date
-              </label>
-              <input
-                id="start-date-filter"
-                type="date"
-                value={startDateFilter}
-                max={endDateFilter || undefined}
-                onChange={(event) => setStartDateFilter(event.target.value)}
-                className="w-full rounded-xl border border-[#E1E5DB] bg-white px-3 py-2.5 text-sm text-[#34483B] outline-none transition focus:border-[#6D9B83] focus:ring-2 focus:ring-[#DDF2E5]"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="end-date-filter"
-                className="mb-1.5 block text-xs font-semibold text-[#637066]"
-              >
-                To date
-              </label>
-              <input
-                id="end-date-filter"
-                type="date"
-                value={endDateFilter}
-                min={startDateFilter || undefined}
-                onChange={(event) => setEndDateFilter(event.target.value)}
-                className="w-full rounded-xl border border-[#E1E5DB] bg-white px-3 py-2.5 text-sm text-[#34483B] outline-none transition focus:border-[#6D9B83] focus:ring-2 focus:ring-[#DDF2E5]"
-              />
-            </div>
-
-            <div className="flex items-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setTransactionFilter('all')
-                  setCategoryFilter('all')
-                  setStartDateFilter('')
-                  setEndDateFilter('')
-                  setSearchTerm('')
-                }}
-                className="w-full rounded-xl border border-[#E1E5DB] bg-white px-3 py-2.5 text-sm font-semibold text-[#637066] transition hover:border-[#A9B9AB] hover:bg-[#F3F6F0] hover:text-[#173F35]"
-              >
-                Clear all filters
-              </button>
-            </div>
-          </div>
-
-          {/* Transaction table */}
-          <div className="px-5 pb-5 sm:px-7 sm:pb-7">
-            <div className="overflow-hidden rounded-2xl border border-[#E5E8DF] bg-white">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[680px] text-left">
-                  <thead>
-                    <tr className="border-b border-[#E1E6DC] bg-[#F3F6F0]">
-                      <th className="px-5 py-4 text-xs font-bold uppercase tracking-wider text-[#40574A]">
-                        Transaction
-                      </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-[#40574A]">
-                        Description
-                      </th>
-                      <th className="px-4 py-4 text-xs font-bold uppercase tracking-wider text-[#40574A]">
-                        Date
-                      </th>
-                      <th className="w-[170px] px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-[#40574A]">
-                        Amount
-                      </th>
-                      <th className="w-[80px] px-5 py-4 text-right text-xs font-bold uppercase tracking-wider text-[#40574A]">
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {transactions.length === 0 && isLoadingTransactions ? (
-                      <tr>
-                        <td colSpan={5} className="px-5 py-12 text-center text-sm text-[#7B8177]">
-                          Loading your transactions...
-                        </td>
-                      </tr>
-                    ) : transactions.length === 0 && !transactionError ? (
-                      <tr>
-                        <td colSpan={5} className="px-5 py-12 text-center">
-                          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#DDF2E5] text-[#177452]">
-                            <Wallet size={26} />
-                          </div>
-                          <p className="mt-4 font-semibold text-[#173F35]">
-                            Your story starts here
-                          </p>
-                          <p className="mt-2 text-sm text-[#7B8177]">
-                            Add your first transaction to see it appear here.
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setTransactionToEdit(null)
-                              setShowTransactionForm(true)
-                            }}
-                            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-[#173F35] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#245548]"
-                          >
-                            <CirclePlus size={16} />
-                            Add transaction
-                          </button>
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredTransactions.map((transaction) => {
-                        const isIncome = transaction.type === 'income'
-
-                        return (
-                          <tr
-                            key={transaction.id}
-                            className="group border-b border-[#EEF0E9] transition-colors duration-200 hover:bg-[#EAF5EC]"
-                          >
-                            <td className="px-5 py-4">
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isIncome
-                                    ? 'bg-[#DDF2E5] text-[#177452]'
-                                    : 'bg-[#FBE8E3] text-[#B95B51]'
-                                    }`}
-                                >
-                                  {isIncome ? (
-                                    <ArrowDownLeft size={19} />
-                                  ) : (
-                                    <ArrowUpRight size={19} />
-                                  )}
-                                </div>
-
-                                <div className="min-w-0">
-                                  <p className="max-w-[220px] truncate text-sm font-semibold text-[#243A30]">
-                                    {transaction.title}
-                                  </p>
-
-                                  <p
-                                    className={`mt-1 text-xs ${isIncome ? 'text-[#177452]' : 'text-[#B95B51]'
-                                      }`}
-                                  >
-                                    {isIncome ? 'Income' : 'Expense'}
-                                    <span className="text-[#A0A69D]"> · </span>
-                                    <span className="text-[#7B8177]">
-                                      {transaction.category}
-                                    </span>
-                                  </p>
-                                </div>
-                              </div>
-                            </td>
-
-                            <td className="px-4 py-4">
-                              {transaction.description?.trim() ? (
-                                <p
-                                  title={transaction.description}
-                                  className="max-w-[280px] truncate text-sm text-[#68766E]"
-                                >
-                                  {transaction.description}
-                                </p>
-                              ) : (
-                                <span className="text-sm text-[#A0A69D]">—</span>
-                              )}
-                            </td>
-
-                            <td className="whitespace-nowrap px-4 py-4 text-sm text-[#7B8177]">
-                              {transaction.date}
-                            </td>
-
-                            <td className="w-[170px] whitespace-nowrap px-6 py-4 text-right">
-                              <span
-                                className={`inline-block min-w-[110px] text-right text-sm font-bold tabular-nums ${isIncome ? 'text-[#177452]' : 'text-[#B95B51]'
-                                  }`}
-                              >
-                                {isIncome ? '+' : '−'}{formatCurrency(transaction.amount)}
-                              </span>
-                            </td>
-
-
-                            <td className="w-[80px] px-5 py-4 text-right">
-                              <div className="relative inline-block">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setOpenActionMenuId((currentId) =>
-                                      currentId === transaction.id ? null : transaction.id
-                                    )
-                                  }
-                                  aria-label={`Actions for ${transaction.title}`}
-                                  aria-expanded={openActionMenuId === transaction.id}
-                                  aria-haspopup="menu"
-                                  title="Transaction actions"
-                                  className={`inline-flex h-9 w-9 items-center justify-center rounded-xl transition focus:outline-none focus:ring-2 focus:ring-[#A9B9AB] ${openActionMenuId === transaction.id
-                                    ? 'bg-[#EAF5EC] text-[#173F35]'
-                                    : 'text-[#A6ADA2] hover:bg-[#EAF5EC] hover:text-[#173F35]'
-                                    }`}
-                                >
-                                  <MoreVertical size={18} />
-                                </button>
-
-                                {openActionMenuId === transaction.id && (
-                                  <div
-                                    role="menu"
-                                    className="absolute right-0 top-full z-[100] mt-1 w-40 rounded-xl border border-[#E1E6DC] bg-white p-1.5 text-left shadow-xl"
-                                  >
-                                    <button
-                                      type="button"
-                                      role="menuitem"
-                                      onClick={() => {
-                                        setTransactionToEdit(transaction)
-                                        setOpenActionMenuId(null)
-                                        setShowTransactionForm(true)
-                                      }}
-                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#34483B] transition hover:bg-[#EAF5EC]"
-                                    >
-                                      <Pencil size={15} />
-                                      Edit
-                                    </button>
-
-                                    <button
-                                      type="button"
-                                      role="menuitem"
-                                      onClick={() => {
-                                        setTransactionToDelete(transaction)
-                                        setOpenActionMenuId(null)
-                                      }}
-                                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#B95B51] transition hover:bg-[#FBE8E3]"
-                                    >
-                                      <Trash2 size={15} />
-                                      Delete
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </td>
-
-                          </tr>
-                        )
-                      })
-                    )}
-
-                    {transactions.length > 0 &&
-                      filteredTransactions.length === 0 && (
-                        <tr>
-                          <td colSpan={5} className="px-5 py-12 text-center">
-                            <p className="font-semibold text-[#173F35]">
-                              No matching transactions
-                            </p>
-                            <p className="mt-2 text-sm text-[#7B8177]">
-                              Choose another filter to see your activity.
-                            </p>
-                          </td>
-                        </tr>
-                      )}
-                  </tbody>
-                </table>
+            {isLoadingTransactions ? (
+              <div className="space-y-5 py-6">
+                {[1, 2, 3].map((item) => (
+                  <div key={item} className="flex animate-pulse items-center gap-4">
+                    <div className="h-11 w-11 rounded-2xl bg-[#F0F2EC]" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 w-32 rounded bg-[#F0F2EC]" />
+                      <div className="h-3 w-24 rounded bg-[#F0F2EC]" />
+                    </div>
+                    <div className="h-4 w-20 rounded bg-[#F0F2EC]" />
+                  </div>
+                ))}
               </div>
-            </div>
 
-            {transactions.length > 0 && (
-              <p className="mt-3 px-1 text-xs text-[#8B9186]">
-                Showing{' '}
-                {filteredTransactions.length}{' '}
-                of {transactions.length} transactions
-              </p>
+            ) : transactionError ? (
+              <div className="py-10 text-center">
+                <p className="text-sm font-medium text-red-500">
+                  {transactionError}
+                </p>
+              </div>
+
+            ) : recentTransactions.length === 0 ? (
+              <div className="py-12 text-center">
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F3F6F0]">
+                  <Wallet size={25} className="text-[#82917F]" />
+                </div>
+
+                <h3 className="mt-4 text-sm font-bold text-[#354438]">
+                  No transactions yet
+                </h3>
+
+                <p className="mt-1 text-sm text-[#929B91]">
+                  Your recent activity will appear here.
+                </p>
+              </div>
+
+            ) : (
+              <div className="divide-y divide-[#EEF0E9]">
+                {recentTransactions.map((transaction) => {
+                  const isIncome = transaction.type === 'income'
+
+                  return (
+                    <div
+                      key={transaction.id}
+                      className="-mx-3 flex items-center gap-3 rounded-2xl border border-transparent px-3 py-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#DCE8D9] hover:bg-[#F1F6EF] hover:shadow-[0_5px_16px_rgba(65,95,66,0.09)] sm:gap-4"
+                    >
+                      {/* Icon */}
+                      <div
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${isIncome
+                          ? 'bg-[#EAF5EC] text-[#4D9660]'
+                          : 'bg-[#FBEEEE] text-[#D66B6B]'
+                          }`}
+                      >
+                        {isIncome ? (
+                          <ArrowDownLeft size={21} strokeWidth={2.3} />
+                        ) : (
+                          <ArrowUpRight size={21} strokeWidth={2.3} />
+                        )}
+                      </div>
+
+                      {/* Transaction Details */}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[14px] font-bold text-[#26352B]">
+                          {transaction.title}
+                        </p>
+
+                        <div className="mt-1.5 flex items-center gap-2">
+                          <span
+                            className={`h-2 w-2 shrink-0 rounded-full ${isIncome ? 'bg-[#65A875]' : 'bg-[#D98282]'
+                              }`}
+                          />
+
+                          <span className="truncate text-xs font-semibold text-[#657367]">
+                            {transaction.category}
+                          </span>
+                        </div>
+
+                        <p className="mt-1 text-[11px] font-medium text-[#A0A89F]">
+                          {transaction.date}
+                        </p>
+                      </div>
+
+                      {/* Amount */}
+                      <div className="flex shrink-0 flex-col items-end gap-1.5">
+                        <p
+                          className={`text-sm font-extrabold tracking-tight ${isIncome ? 'text-[#4D9660]' : 'text-[#D66B6B]'
+                            }`}
+                        >
+                          {isIncome ? '+' : '-'}
+                          {formatCurrency(transaction.amount)}
+                        </p>
+
+                        <span
+                          className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${isIncome
+                            ? 'bg-[#EAF5EC] text-[#4D9660]'
+                            : 'bg-[#FBEEEE] text-[#D66B6B]'
+                            }`}
+                        >
+                          {isIncome ? 'INCOME' : 'EXPENSE'}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             )}
           </div>
-
         </section>
 
         <footer className="py-7 text-center text-xs text-stone-400">

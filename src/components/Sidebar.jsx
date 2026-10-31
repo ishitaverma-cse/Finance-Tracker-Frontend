@@ -11,42 +11,52 @@ const navigationItems = [
     {
         label: 'Dashboard',
         icon: LayoutDashboard,
-        active: true,
+        page: 'dashboard',
     },
     {
         label: 'Transactions',
         icon: ArrowLeftRight,
-        active: false,
+        page: 'transactions',
     },
     {
         label: 'Budgets',
         icon: Wallet,
-        active: false,
+        page: 'budgets',
     },
     {
         label: 'Reports',
         icon: ChartNoAxesCombined,
-        active: false,
+        page: 'reports',
     },
 ]
 
-function Sidebar() {
+function Sidebar({ activePage, setActivePage, onClose, isMobile = false }) {
+    const handleNavigation = (page) => {
+        setActivePage(page)
+        onClose?.()
+    }
     return (
-        <aside className="flex h-full w-64 shrink-0 flex-col border-r border-emerald-900/10 bg-[#fffdf7] px-5 py-7">
+        <aside className={`flex h-full ${isMobile ? 'w-full' : 'w-64'
+            } shrink-0 flex-col bg-[#fffdf7] px-5 py-7`}>
             {/* Brand */}
-            <div className="mb-12 flex items-center gap-3 px-2">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-800 text-white shadow-sm">
-                    <CircleDollarSign size={25} strokeWidth={2} />
+            <div className="mb-8">
+                <div className="flex items-center gap-3 px-2 mb-7">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-800 text-white shadow-sm">
+                        <CircleDollarSign size={25} strokeWidth={2} />
+                    </div>
+
+                    <div>
+                        <h1 className="text-lg font-bold tracking-tight text-emerald-950">
+                            Thrive
+                        </h1>
+                        <p className="text-xs text-stone-500">
+                            Personal Finance
+                        </p>
+                    </div>
                 </div>
 
-                <div>
-                    <h1 className="text-lg font-bold tracking-tight text-emerald-950">
-                        Thrive
-                    </h1>
-                    <p className="text-xs text-stone-500">
-                        Personal Finance
-                    </p>
-                </div>
+                {/* Brand Divider */}
+                <div className="mt-0 border-b border-stone-200" />
             </div>
 
             {/* Navigation */}
@@ -57,16 +67,17 @@ function Sidebar() {
             <nav className="flex flex-col gap-2">
                 {navigationItems.map((item) => {
                     const Icon = item.icon
+                    const isActive = activePage === item.page
 
                     return (
                         <button
-                            key={item.label}
+                            key={item.page}
                             type="button"
-                            className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${
-                                item.active
-                                    ? 'bg-emerald-800 text-white shadow-sm'
-                                    : 'text-stone-600 hover:bg-emerald-50 hover:text-emerald-900'
-                            }`}
+                            onClick={() => handleNavigation(item.page)}
+                            className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${isActive
+                                ? 'bg-emerald-800 text-white shadow-sm'
+                                : 'text-stone-600 hover:bg-emerald-50 hover:text-emerald-900'
+                                }`}
                         >
                             <Icon size={19} strokeWidth={1.9} />
                             <span>{item.label}</span>
@@ -79,7 +90,11 @@ function Sidebar() {
             <div className="mt-auto border-t border-stone-200 pt-5">
                 <button
                     type="button"
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-stone-600 transition-colors hover:bg-emerald-50 hover:text-emerald-900"
+                    onClick={() => handleNavigation('settings')}
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${activePage === 'settings'
+                        ? 'bg-emerald-800 text-white shadow-sm'
+                        : 'text-stone-600 hover:bg-emerald-50 hover:text-emerald-900'
+                        }`}
                 >
                     <Settings size={19} strokeWidth={1.9} />
                     <span>Settings</span>
