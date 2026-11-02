@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { toast, ToastContainer } from 'react-toastify'
 import TransactionsPage from './components/TransactionsPage'
+import BudgetsPage from './components/BudgetsPage'
 import 'react-toastify/dist/ReactToastify.css'
 import {
   ArrowDownLeft,
@@ -582,12 +583,15 @@ function App() {
               handleDeleteTransaction={handleDeleteTransaction}
               isDeletingTransaction={isDeletingTransaction}
             />
+          ) : activePage === 'budgets' ? (
+            <BudgetsPage
+              transactions={transactions}
+            />
           ) : (
-            <section className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-              <h2 className="text-lg font-semibold text-emerald-950">
+            <section className="rounded-2xl border border-stone-200/80 bg-white p-8 text-center shadow-sm">
+              <h2 className="text-xl font-bold text-emerald-950">
                 Coming up next
               </h2>
-
               <p className="mt-2 text-sm text-stone-500">
                 We're building this section of Thrive. Stay tuned!
               </p>
