@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react'
-import { toast, ToastContainer } from 'react-toastify'
 import TransactionsPage from './components/TransactionsPage'
 import BudgetsPage from './components/BudgetsPage'
+import ReportsPage from './components/ReportsPage'
+import ProfilePage from './components/ProfilePage'
+import QuickBudgetOverview from './components/QuickBudgetOverview'
+
+import { toast, ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import {
   ArrowDownLeft,
@@ -269,7 +273,7 @@ function App() {
   // Latest 3 transactions for Dashboard
   const recentTransactions = [...transactions]
     .sort((a, b) => b.dateISO.localeCompare(a.dateISO))
-    .slice(0, 3)
+    .slice(0, 4)
 
   const handleAddTransaction = async (newTransaction) => {
     setTransactionError('')
@@ -457,9 +461,9 @@ function App() {
         title: 'Reports',
         description: 'Understand your financial activity through detailed insights.',
       },
-      settings: {
-        title: 'Settings',
-        description: 'Manage your account and application preferences.',
+      profile: {
+        title: 'Profile',
+        description: 'View your account details and manage your session.',
       },
     }
 
@@ -500,14 +504,15 @@ function App() {
           </div>
         </div>
 
-        <div className="hidden lg:block">
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:block">
           <Sidebar
             activePage={activePage}
             setActivePage={setActivePage}
           />
         </div>
 
-        <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-9 lg:py-8">
+        <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:ml-72 lg:px-9 lg:py-8">
 
           <header className="mb-8">
             {/* Breadcrumb */}
@@ -536,13 +541,18 @@ function App() {
               </span>
             </div>
 
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-emerald-950">
-              {currentPage?.title}
-            </h1>
+            {activePage !== 'reports' && (
+              <>
+                <h1 className="mt-3 text-3xl font-bold tracking-tight text-emerald-950">
+                  {currentPage?.title}
+                </h1>
 
-            <p className="mt-2 text-sm text-stone-500">
-              {currentPage?.description}
-            </p>
+                <p className="mt-2 text-sm text-stone-500">
+                  {currentPage?.description}
+                </p>
+              </>
+            )}
+
           </header>
 
           {activePage === 'transactions' ? (
@@ -583,20 +593,26 @@ function App() {
               handleDeleteTransaction={handleDeleteTransaction}
               isDeletingTransaction={isDeletingTransaction}
             />
+
           ) : activePage === 'budgets' ? (
             <BudgetsPage
               transactions={transactions}
             />
+          ) : activePage === 'reports' ? (
+            <ReportsPage
+              transactions={transactions}
+              formatCurrency={formatCurrency}
+            />
           ) : (
-            <section className="rounded-2xl border border-stone-200/80 bg-white p-8 text-center shadow-sm">
-              <h2 className="text-xl font-bold text-emerald-950">
-                Coming up next
-              </h2>
-              <p className="mt-2 text-sm text-stone-500">
-                We're building this section of Thrive. Stay tuned!
-              </p>
-            </section>
+            <ProfilePage
+              user={user}
+              onSignOut={() => {
+                logout()
+                setAuthScreen('login')
+              }}
+            />
           )}
+
         </main>
 
         <ToastContainer
@@ -644,14 +660,16 @@ function App() {
         </div>
       </div>
 
-      <div className="hidden lg:block">
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:block">
         <Sidebar
           activePage={activePage}
           setActivePage={setActivePage}
         />
       </div>
 
-      <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:px-9 lg:py-8">
+
+      <main className="min-w-0 flex-1 px-4 py-5 sm:px-6 lg:ml-72 lg:px-9 lg:py-8">
         {/* Top bar */}
         <header className="mb-8 border-b border-stone-200 pb-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -699,16 +717,6 @@ function App() {
                   onChange={(event) => setSearchTerm(event.target.value)}
                 />
               </label>
-
-              <button
-                type="button"
-                aria-label="Notifications"
-                className="relative rounded-xl border border-stone-200 bg-white p-3 text-stone-600 transition hover:bg-emerald-50"
-              >
-                <Bell size={19} />
-                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose-500" />
-              </button>
-
 
               <div className="relative">
                 <button
@@ -999,7 +1007,7 @@ function App() {
             </div>
 
             <div className="mt-2 space-y-3">
-              {expenseChartData.map((item, index) => (
+              {expenseChartData.slice(0, 4).map((item, index) => (
                 <div
                   key={item.name}
                   className="flex items-center justify-between gap-3 text-xs"
@@ -1027,160 +1035,183 @@ function App() {
           </div>
         </section>
 
-        {/* Recent Transactions */}
-        <section className="mt-6 overflow-hidden rounded-3xl border border-[#E6E9DF] bg-white shadow-sm">
-          {/* Header */}
-          <div className="flex items-center justify-between gap-4 border-b border-[#EEF0E9] px-5 py-5 sm:px-7">
-            <div className="flex items-center gap-3">
+        {/* Dashboard Activity & Budget Section */}
+        <div className="mt-6 grid grid-cols-1 items-start gap-6 xl:grid-cols-2">
 
+          {/* Recent Transactions */}
+          <section className="overflow-hidden rounded-3xl border border-[#E6E9DF] bg-white shadow-sm">
+            {/* Header */}
+            <div className="flex items-center justify-between gap-4 border-b border-[#EEF0E9] px-5 py-5 sm:px-7">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 Sidebar-0 items-center justify-center rounded-2xl bg-[#527A5B] text-white shadow-md shadow-[#527A5B]/20">
-                  <Activity size={22} strokeWidth={2.2} />
-                </div>
 
-                <div>
-                  <div className="flex items-center gap-2.5">
-                    <h2 className="text-lg font-bold text-emerald-950">
-                      Recent Transactions
-                    </h2>
-
-                    <span className="rounded-lg bg-[#EAF2E8] px-2.5 py-1 text-[11px] font-extrabold tracking-wide text-[#527A5B]">
-                      {recentTransactions.length} RECENT
-                    </span>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 Sidebar-0 items-center justify-center rounded-2xl bg-[#527A5B] text-white shadow-md shadow-[#527A5B]/20">
+                    <Activity size={22} strokeWidth={2.2} />
                   </div>
 
-                  <p className="mt-1 text-[13px] text-stone-500">
-                    Your latest financial activity, at a glance.
-                  </p>
+                  <div>
+                    <div className="flex items-center gap-2.5">
+                      <h2 className="text-lg font-bold text-emerald-950">
+                        Recent Transactions
+                      </h2>
+
+                      <span className="rounded-lg bg-[#EAF2E8] px-2.5 py-1 text-[11px] font-extrabold tracking-wide text-[#527A5B]">
+                        {recentTransactions.length} RECENT
+                      </span>
+                    </div>
+
+                    <p className="mt-1 text-[13px] text-stone-500">
+                      Your latest financial activity, at a glance.
+                    </p>
+                  </div>
                 </div>
               </div>
+
+              <button
+                type="button"
+                onClick={() => setActivePage('transactions')}
+                className="flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold text-[#527A5B] transition hover:bg-[#F2F6F0]"
+              >
+                View all
+                <ChevronRight size={17} strokeWidth={2.5} />
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setActivePage('transactions')}
-              className="flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold text-[#527A5B] transition hover:bg-[#F2F6F0]"
-            >
-              View all
-              <ChevronRight size={17} strokeWidth={2.5} />
-            </button>
-          </div>
+            {/* Transaction List */}
+            <div className="px-5 mb-2 sm:px-7">
 
-          {/* Transaction List */}
-          <div className="px-5 sm:px-7">
-
-            {isLoadingTransactions ? (
-              <div className="space-y-5 py-6">
-                {[1, 2, 3].map((item) => (
-                  <div key={item} className="flex animate-pulse items-center gap-4">
-                    <div className="h-11 w-11 rounded-2xl bg-[#F0F2EC]" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-3 w-32 rounded bg-[#F0F2EC]" />
-                      <div className="h-3 w-24 rounded bg-[#F0F2EC]" />
+              {isLoadingTransactions ? (
+                <div className="space-y-5 py-6">
+                  {[1, 2, 3].map((item) => (
+                    <div key={item} className="flex animate-pulse items-center gap-4">
+                      <div className="h-11 w-11 rounded-2xl bg-[#F0F2EC]" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 w-32 rounded bg-[#F0F2EC]" />
+                        <div className="h-3 w-24 rounded bg-[#F0F2EC]" />
+                      </div>
+                      <div className="h-4 w-20 rounded bg-[#F0F2EC]" />
                     </div>
-                    <div className="h-4 w-20 rounded bg-[#F0F2EC]" />
-                  </div>
-                ))}
-              </div>
-
-            ) : transactionError ? (
-              <div className="py-10 text-center">
-                <p className="text-sm font-medium text-red-500">
-                  {transactionError}
-                </p>
-              </div>
-
-            ) : recentTransactions.length === 0 ? (
-              <div className="py-12 text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F3F6F0]">
-                  <Wallet size={25} className="text-[#82917F]" />
+                  ))}
                 </div>
 
-                <h3 className="mt-4 text-sm font-bold text-[#354438]">
-                  No transactions yet
-                </h3>
+              ) : transactionError ? (
+                <div className="py-10 text-center">
+                  <p className="text-sm font-medium text-red-500">
+                    {transactionError}
+                  </p>
+                </div>
 
-                <p className="mt-1 text-sm text-[#929B91]">
-                  Your recent activity will appear here.
-                </p>
-              </div>
+              ) : recentTransactions.length === 0 ? (
+                <div className="py-12 text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F3F6F0]">
+                    <Wallet size={25} className="text-[#82917F]" />
+                  </div>
 
-            ) : (
-              <div className="divide-y divide-[#EEF0E9]">
-                {recentTransactions.map((transaction) => {
-                  const isIncome = transaction.type === 'income'
+                  <h3 className="mt-4 text-sm font-bold text-[#354438]">
+                    No transactions yet
+                  </h3>
 
-                  return (
-                    <div
-                      key={transaction.id}
-                      className="-mx-3 flex items-center gap-3 rounded-2xl border border-transparent px-3 py-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#DCE8D9] hover:bg-[#F1F6EF] hover:shadow-[0_5px_16px_rgba(65,95,66,0.09)] sm:gap-4"
-                    >
-                      {/* Icon */}
+                  <p className="mt-1 text-sm text-[#929B91]">
+                    Your recent activity will appear here.
+                  </p>
+                </div>
+
+              ) : (
+                <div className="divide-y divide-[#EEF0E9]">
+                  {recentTransactions.map((transaction) => {
+                    const isIncome = transaction.type === 'income'
+
+                    return (
                       <div
-                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${isIncome
-                          ? 'bg-[#EAF5EC] text-[#4D9660]'
-                          : 'bg-[#FBEEEE] text-[#D66B6B]'
-                          }`}
+                        key={transaction.id}
+                        className="-mx-3 flex items-center gap-3 rounded-2xl border border-transparent px-3 py-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-[#DCE8D9] hover:bg-[#F1F6EF] hover:shadow-[0_5px_16px_rgba(65,95,66,0.09)] sm:gap-4"
                       >
-                        {isIncome ? (
-                          <ArrowDownLeft size={21} strokeWidth={2.3} />
-                        ) : (
-                          <ArrowUpRight size={21} strokeWidth={2.3} />
-                        )}
-                      </div>
-
-                      {/* Transaction Details */}
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[14px] font-bold text-[#26352B]">
-                          {transaction.title}
-                        </p>
-
-                        <div className="mt-1.5 flex items-center gap-2">
-                          <span
-                            className={`h-2 w-2 shrink-0 rounded-full ${isIncome ? 'bg-[#65A875]' : 'bg-[#D98282]'
-                              }`}
-                          />
-
-                          <span className="truncate text-xs font-semibold text-[#657367]">
-                            {transaction.category}
-                          </span>
-                        </div>
-
-                        <p className="mt-1 text-[11px] font-medium text-[#A0A89F]">
-                          {transaction.date}
-                        </p>
-                      </div>
-
-                      {/* Amount */}
-                      <div className="flex shrink-0 flex-col items-end gap-1.5">
-                        <p
-                          className={`text-sm font-extrabold tracking-tight ${isIncome ? 'text-[#4D9660]' : 'text-[#D66B6B]'
-                            }`}
-                        >
-                          {isIncome ? '+' : '-'}
-                          {formatCurrency(transaction.amount)}
-                        </p>
-
-                        <span
-                          className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${isIncome
+                        {/* Icon */}
+                        <div
+                          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${isIncome
                             ? 'bg-[#EAF5EC] text-[#4D9660]'
                             : 'bg-[#FBEEEE] text-[#D66B6B]'
                             }`}
                         >
-                          {isIncome ? 'INCOME' : 'EXPENSE'}
-                        </span>
+                          {isIncome ? (
+                            <ArrowDownLeft size={21} strokeWidth={2.3} />
+                          ) : (
+                            <ArrowUpRight size={21} strokeWidth={2.3} />
+                          )}
+                        </div>
+
+                        {/* Transaction Details */}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[14px] font-bold text-[#26352B]">
+                            {transaction.title}
+                          </p>
+
+                          <div className="mt-1.5 flex items-center gap-2">
+                            <span
+                              className={`h-2 w-2 shrink-0 rounded-full ${isIncome ? 'bg-[#65A875]' : 'bg-[#D98282]'
+                                }`}
+                            />
+
+                            <span className="truncate text-xs font-semibold text-[#657367]">
+                              {transaction.category}
+                            </span>
+                          </div>
+
+                          <p className="mt-1 text-[11px] font-medium text-[#A0A89F]">
+                            {transaction.date}
+                          </p>
+                        </div>
+
+                        {/* Amount */}
+                        <div className="flex shrink-0 flex-col items-end gap-1.5">
+                          <p
+                            className={`text-sm font-extrabold tracking-tight ${isIncome ? 'text-[#4D9660]' : 'text-[#D66B6B]'
+                              }`}
+                          >
+                            {isIncome ? '+' : '-'}
+                            {formatCurrency(transaction.amount)}
+                          </p>
+
+                          <span
+                            className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${isIncome
+                              ? 'bg-[#EAF5EC] text-[#4D9660]'
+                              : 'bg-[#FBEEEE] text-[#D66B6B]'
+                              }`}
+                          >
+                            {isIncome ? 'INCOME' : 'EXPENSE'}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Quick Budget Overview */}
+          {/* Quick Budget Overview */}
+          <div className="min-w-0">
+            <QuickBudgetOverview
+              token={token}
+              formatCurrency={formatCurrency}
+              onViewBudgets={() => setActivePage('budgets')}
+            />
           </div>
-        </section>
+
+        </div>
 
         <footer className="py-7 text-center text-xs text-stone-400">
-          Thrive · Take control of your financial future
+          <p>
+            Thrive · Take control of your financial future
+          </p>
+
+          <p className="mt-2">
+            Built with <span className="text-rose-400">♥</span> by{' '}
+            <span className="font-semibold text-[#527A5B]">Ishita Verma</span>
+          </p>
         </footer>
+
       </main>
 
       {showTransactionForm && (

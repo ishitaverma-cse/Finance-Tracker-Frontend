@@ -578,13 +578,13 @@ const BudgetsPage = ({ transactions = [] }) => {
                                                 aria-label={`Go to page ${page}`}
                                                 aria-current={currentPage === page ? 'page' : undefined}
                                                 className={`
-                        flex h-9 w-9 items-center justify-center rounded-lg
-                        text-sm font-semibold transition
-                        ${currentPage === page
+                                                        flex h-9 w-9 items-center justify-center rounded-lg
+                                                        text-sm font-semibold transition
+                                                        ${currentPage === page
                                                         ? 'bg-[#315C42] text-white shadow-sm'
                                                         : 'border border-[#E1E5DB] bg-white text-[#637066] hover:bg-[#F3F6F0]'
                                                     }
-                    `}
+                                                `}
                                             >
                                                 {page}
                                             </button>

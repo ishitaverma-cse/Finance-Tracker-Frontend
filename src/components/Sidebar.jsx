@@ -3,7 +3,7 @@ import {
     ArrowLeftRight,
     Wallet,
     ChartNoAxesCombined,
-    Settings,
+    UserRound,
     CircleDollarSign,
 } from 'lucide-react'
 
@@ -86,29 +86,21 @@ function Sidebar({ activePage, setActivePage, onClose, isMobile = false }) {
                 })}
             </nav>
 
-            {/* Bottom settings */}
+            {/* Bottom Profile */}
             <div className="mt-auto border-t border-stone-200 pt-5">
                 <button
                     type="button"
-                    onClick={() => handleNavigation('settings')}
-                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${activePage === 'settings'
-                        ? 'bg-emerald-800 text-white shadow-sm'
-                        : 'text-stone-600 hover:bg-emerald-50 hover:text-emerald-900'
+                    onClick={() => handleNavigation('profile')}
+                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-colors ${activePage === 'profile'
+                            ? 'bg-emerald-800 text-white shadow-sm'
+                            : 'text-stone-600 hover:bg-emerald-50 hover:text-emerald-900'
                         }`}
                 >
-                    <Settings size={19} strokeWidth={1.9} />
-                    <span>Settings</span>
+                    <UserRound size={19} strokeWidth={1.9} />
+                    <span>Profile</span>
                 </button>
-
-                <div className="mt-5 rounded-2xl bg-emerald-50 p-4">
-                    <p className="text-sm font-semibold text-emerald-950">
-                        Smart money habits
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-emerald-800/75">
-                        Small steps today, stronger finances tomorrow.
-                    </p>
-                </div>
             </div>
+
         </aside>
     )
 }

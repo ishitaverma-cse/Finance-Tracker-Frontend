@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import {
     ArrowDownLeft,
     ArrowUpRight,
@@ -51,6 +52,8 @@ const TransactionsPage = ({
 
     const [currentPage, setCurrentPage] = useState(1)
     const [rowsPerPage, setRowsPerPage] = useState(5)
+
+    const [dropdownPosition, setDropdownPosition] = useState(null)
 
     // Financial Insights
     const transactionCount = transactions.length
@@ -120,8 +123,8 @@ const TransactionsPage = ({
 
                 {/* Money In / Money Out */}
                 <div className="grid grid-cols-2 gap-3 px-5 pb-5 sm:gap-4 sm:px-7">
-                    <div className="rounded-2xl border border-[#E1EAE0] bg-white p-4 sm:p-5">
-                        <div className="flex items-center gap-2 text-sm font-medium text-[#738076]">
+                    <div className="rounded-2xl border border-[#E1EAE0] bg-white p-4 sm:p-5 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:border-[#C9DCC9] hover:bg-[#EAF2E8] hover:shadow-[0_10px_25px_rgba(82,122,88,0.10)]">
+                        <div className="flex items-center gap-2 text-sm font-medium text-[#40574A]">
                             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#DDF2E5] text-[#177452]">
                                 <ArrowDownLeft size={17} />
                             </span>
@@ -133,8 +136,8 @@ const TransactionsPage = ({
                         <p className="mt-1 text-xs text-[#899187]">Recorded income</p>
                     </div>
 
-                    <div className="rounded-2xl border border-[#EEE3DC] bg-white p-4 sm:p-5">
-                        <div className="flex items-center gap-2 text-sm font-medium text-[#738076]">
+                    <div className="rounded-2xl border border-[#EEE3DC] bg-white p-4 sm:p-5 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:border-[#C9DCC9] hover:bg-[#EAF2E8] hover:shadow-[0_10px_25px_rgba(82,122,88,0.10)]">
+                        <div className="flex items-center gap-2 text-sm font-medium text-[#40574A]">
                             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#FBE8E3] text-[#B95B51]">
                                 <ArrowUpRight size={17} />
                             </span>
@@ -404,11 +407,28 @@ const TransactionsPage = ({
                                                         <div className="relative inline-block">
                                                             <button
                                                                 type="button"
-                                                                onClick={() =>
-                                                                    setOpenActionMenuId((currentId) =>
-                                                                        currentId === transaction.id ? null : transaction.id
-                                                                    )
-                                                                }
+                                                                onClick={(event) => {
+                                                                    if (openActionMenuId === transaction.id) {
+                                                                        setOpenActionMenuId(null)
+                                                                        setDropdownPosition(null)
+                                                                        return
+                                                                    }
+
+                                                                    const rect = event.currentTarget.getBoundingClientRect()
+                                                                    const menuHeight = 90
+
+                                                                    const spaceBelow = window.innerHeight - rect.bottom
+                                                                    const shouldOpenUpward = spaceBelow < menuHeight + 8
+
+                                                                    setDropdownPosition({
+                                                                        top: shouldOpenUpward
+                                                                            ? rect.top - menuHeight - 4
+                                                                            : rect.bottom + 4,
+                                                                        right: window.innerWidth - rect.right,
+                                                                    })
+
+                                                                    setOpenActionMenuId(transaction.id)
+                                                                }}
                                                                 aria-label={`Actions for ${transaction.title}`}
                                                                 aria-expanded={openActionMenuId === transaction.id}
                                                                 aria-haspopup="menu"
@@ -421,39 +441,50 @@ const TransactionsPage = ({
                                                                 <MoreVertical size={18} />
                                                             </button>
 
-                                                            {openActionMenuId === transaction.id && (
-                                                                <div
-                                                                    role="menu"
-                                                                    className="absolute right-0 top-full z-[100] mt-1 w-40 rounded-xl border border-[#E1E6DC] bg-white p-1.5 text-left shadow-xl"
-                                                                >
-                                                                    <button
-                                                                        type="button"
-                                                                        role="menuitem"
-                                                                        onClick={() => {
-                                                                            setTransactionToEdit(transaction)
-                                                                            setOpenActionMenuId(null)
-                                                                            setShowTransactionForm(true)
+                                                            {openActionMenuId === transaction.id &&
+                                                                dropdownPosition &&
+                                                                createPortal(
+                                                                    <div
+                                                                        role="menu"
+                                                                        style={{
+                                                                            position: 'fixed',
+                                                                            top: dropdownPosition.top,
+                                                                            right: dropdownPosition.right,
+                                                                            zIndex: 9999,
                                                                         }}
-                                                                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#34483B] transition hover:bg-[#EAF5EC]"
+                                                                        className="w-40 rounded-xl border border-[#E1E6DC] bg-white p-1.5 text-left shadow-xl"
                                                                     >
-                                                                        <Pencil size={15} />
-                                                                        Edit
-                                                                    </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            role="menuitem"
+                                                                            onClick={() => {
+                                                                                setTransactionToEdit(transaction)
+                                                                                setOpenActionMenuId(null)
+                                                                                setDropdownPosition(null)
+                                                                                setShowTransactionForm(true)
+                                                                            }}
+                                                                            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#34483B] transition hover:bg-[#EAF5EC]"
+                                                                        >
+                                                                            <Pencil size={15} />
+                                                                            Edit
+                                                                        </button>
 
-                                                                    <button
-                                                                        type="button"
-                                                                        role="menuitem"
-                                                                        onClick={() => {
-                                                                            setTransactionToDelete(transaction)
-                                                                            setOpenActionMenuId(null)
-                                                                        }}
-                                                                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#B95B51] transition hover:bg-[#FBE8E3]"
-                                                                    >
-                                                                        <Trash2 size={15} />
-                                                                        Delete
-                                                                    </button>
-                                                                </div>
-                                                            )}
+                                                                        <button
+                                                                            type="button"
+                                                                            role="menuitem"
+                                                                            onClick={() => {
+                                                                                setTransactionToDelete(transaction)
+                                                                                setOpenActionMenuId(null)
+                                                                                setDropdownPosition(null)
+                                                                            }}
+                                                                            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium text-[#B95B51] transition hover:bg-[#FBE8E3]"
+                                                                        >
+                                                                            <Trash2 size={15} />
+                                                                            Delete
+                                                                        </button>
+                                                                    </div>,
+                                                                    document.body
+                                                                )}
                                                         </div>
                                                     </td>
 

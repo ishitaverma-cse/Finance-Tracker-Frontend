@@ -398,7 +398,6 @@ const BudgetCard = ({
                         "
                     >
                         <Pencil size={13} />
-                        Edit
                     </button>
 
                     <button
@@ -414,7 +413,6 @@ const BudgetCard = ({
                         "
                     >
                         <Trash2 size={13} />
-                        Delete
                     </button>
                 </div>
             </div>
