@@ -153,10 +153,9 @@ function Register({ onSwitchToLogin }) {
     }
 
     const inputClass = (field) =>
-        `w-full rounded-2xl border bg-white px-4 py-3.5 text-sm text-stone-800 outline-none transition duration-200 placeholder:text-stone-400 focus:ring-4 ${
-            errors[field]
-                ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-100'
-                : 'border-stone-200 focus:border-emerald-700 focus:ring-emerald-100'
+        `w-full rounded-2xl border bg-white px-4 py-3.5 text-sm text-stone-800 outline-none transition duration-200 placeholder:text-stone-400 focus:ring-4 ${errors[field]
+            ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-100'
+            : 'border-stone-200 focus:border-emerald-700 focus:ring-emerald-100'
         }`
 
     const renderError = (field, id) =>
